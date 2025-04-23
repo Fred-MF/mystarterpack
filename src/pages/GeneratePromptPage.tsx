@@ -10,18 +10,18 @@ export default function GeneratePromptPage() {
   const formData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 
   const generatePrompt = useCallback(() => {
-    return `Crée un rendu 3D de haute qualité d'une figurine en style cartoon, présentée sous blister, à la manière d'un jouet de collection. Le fond en carton est ${formData.backgroundColor} et porte une étiquette de jouet rétro. En haut au centre, en grandes lettres majuscules et en gras et noir, écris "[${formData.title}]". Juste en dessous, tu peux écrire "[${formData.subtitle}]" en plus petit en bas à droite. En haut à droite, un badge bleu circulaire indique "ACTION FIGURE". En haut à gauche, une petite bulle blanche indique "4+". 
+    return `Crée un rendu 3D de haute qualité d'une figurine en style cartoon, présentée sous blister, à la manière d'un jouet de collection. Le fond en carton est ${formData.backgroundColor} et porte une étiquette de jouet rétro. En haut au centre, en grandes lettres majuscules et en gras et noir, écris "${formData.title}". Juste en dessous, tu peux écrire "${formData.subtitle}" en plus petit en bas à droite. En haut à droite, un badge bleu circulaire indique "ACTION FIGURE". En haut à gauche, une petite bulle blanche indique "4+". En bas à droite, une mention discrète indique "Made with ❤️ by www.mystarterpack.com".'
 
-Le personnage se tient debout, moulé dans une boîte en plastique transparente fixée sur un support en carton plat. Il doit ressembler aux photos portrait fournies. L'expression de son visage est [${formData.expression}]. Sa posture est [${formData.posture}]. Le ton général est léger et réaliste. 
+Le personnage se tient debout, moulé dans une boîte en plastique transparente fixée sur un support en carton plat. Il doit ressembler aux photos portrait fournies. L'expression de son visage est ${formData.expression}. Sa posture est ${formData.posture}. Le ton général est léger et réaliste. 
 
-La figurine est habillée de [${formData.habillement}]. Sur le côté de la figurine, intégrés dans des moules en plastique distincts, sont présents 3 accessoires :
-[${formData.accessoire1}]
-[${formData.accessoire2}]
-[${formData.accessoire3}]
+La figurine est habillée de ${formData.habillement}. Sur le côté de la figurine, intégrés dans des moules en plastique distincts, sont présents 3 accessoires :
+- ${formData.accessoire1} ;
+- ${formData.accessoire2} ;
+- ${formData.accessoire3}.
 
-Chaque accessoire s'insère parfaitement dans son propre compartiment moulé. Le fond du pack est de couleur [${formData.backgroundColor}]. L'emballage est photographié ou rendu avec des ombres douces, un éclairage uniforme et un fond blanc épuré pour donner l'impression d'une séance photo commerciale.
+Chaque accessoire est vu de face, positionné à droite de la figurine et s'insère parfaitement dans son propre compartiment moulé. L'emballage est photographié avec des ombres douces, entièrement visible, un éclairage uniforme et un fond blanc épuré pour donner l'impression d'une séance photo commerciale.
 
-Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de Pixar ou des maquettes de jouets modernes. Assure-toi que la disposition et les proportions du produit ressemblent à celles d'un véritable jouet vendu en magasin. Attache une attention toute particulière à ce que le visage de la figurine ressemble fidèlement à la photo portrait fournie.`;
+Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de Pixar ou des maquettes de jouets modernes. Assure-toi que la disposition et les proportions du produit ressemblent à celles d'un véritable jouet vendu en magasin. Attache une attention toute particulière à ce que le visage de la figurine ressemble fidèlement à la photo portrait fournie. Reproduis fidèlement la forme du visage, la coupe de cheveux, les yeux et les expressions faciales tout en gardant une touche stylisée, légèrement caricatural.`;
   }, [formData]);
 
   const handleCopyPrompt = async () => {
