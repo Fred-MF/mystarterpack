@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Copy, ExternalLink, Upload, ShoppingCart, ArrowRight } from 'lucide-react';
+import { Copy, ExternalLink, Upload, ShoppingCart, ArrowRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useCart } from '../lib/cart';
@@ -10,6 +10,17 @@ import AuthModal from '../components/AuthModal';
 
 const STORAGE_KEY = 'starterprint3d_form_data';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const BACKGROUND_COLORS = [
+  { id: 'light-blue', name: 'Bleu clair', value: 'bleu clair', class: 'bg-blue-100' },
+  { id: 'light-green', name: 'Vert clair', value: 'vert clair', class: 'bg-green-100' },
+  { id: 'light-pink', name: 'Rose clair', value: 'rose clair', class: 'bg-pink-100' },
+  { id: 'light-yellow', name: 'Jaune clair', value: 'jaune clair', class: 'bg-yellow-100' },
+  { id: 'light-purple', name: 'Violet clair', value: 'violet clair', class: 'bg-purple-100' },
+  { id: 'light-orange', name: 'Orange clair', value: 'orange clair', class: 'bg-orange-100' },
+  { id: 'light-gray', name: 'Gris clair', value: 'gris clair', class: 'bg-gray-100' },
+  { id: 'white', name: 'Blanc', value: 'blanc', class: 'bg-white' },
+];
 
 function CustomizePage() {
   const navigate = useNavigate();
@@ -29,6 +40,7 @@ function CustomizePage() {
       accessoire1: '',
       accessoire2: '',
       accessoire3: '',
+      backgroundColor: 'bleu clair',
       imageUrl: '',
       file: null as File | null,
     };
@@ -50,16 +62,21 @@ function CustomizePage() {
     }));
   };
 
+  const handleColorChange = (color: typeof BACKGROUND_COLORS[0]) => {
+    setFormData(prev => ({
+      ...prev,
+      backgroundColor: color.value
+    }));
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Veuillez sélectionner un fichier image valide');
         return;
       }
 
-      // Validate file size (max 10MB)
       if (file.size > MAX_FILE_SIZE) {
         setError('La taille du fichier ne doit pas dépasser 10MB');
         return;
@@ -80,16 +97,16 @@ function CustomizePage() {
   };
 
   const generatePrompt = useCallback(() => {
-    return `Crée un rendu 3D de haute qualité d'une figurine en style cartoon, présentée sous blister, à la manière d'un jouet de collection. Le fond en carton est bleu clair et porte une étiquette de jouet rétro. En haut au centre, en grandes lettres majuscules et en gras et noir, écris "${formData.title}". Juste en dessous, tu peux écrire "${formData.subtitle}" en plus petit en bas à droite. En haut à droite, un badge bleu circulaire indique "ACTION FIGURE". En haut à gauche, une petite bulle blanche indique "4+". 
+    return `Crée un rendu 3D de haute qualité d'une figurine en style cartoon, présentée sous blister, à la manière d'un jouet de collection. Le fond en carton est ${formData.backgroundColor} et porte une étiquette de jouet rétro. En haut au centre, en grandes lettres majuscules et en gras et noir, écris "[${formData.title}]". Juste en dessous, tu peux écrire "[${formData.subtitle}]" en plus petit en bas à droite. En haut à droite, un badge bleu circulaire indique "ACTION FIGURE". En haut à gauche, une petite bulle blanche indique "4+". 
 
-Le personnage se tient debout, moulé dans une boîte en plastique transparente fixée sur un support en carton plat. Il doit ressembler à la [PHOTO PORTRAIT] fournie. L'expression de son visage est ${formData.expression}. Sa posture est ${formData.posture}. Le ton général est léger et réaliste. 
+Le personnage se tient debout, moulé dans une boîte en plastique transparente fixée sur un support en carton plat. Il doit ressembler aux photos portrait fournies. L'expression de son visage est [${formData.expression}]. Sa posture est [${formData.posture}]. Le ton général est léger et réaliste. 
 
-La figurine est habillée de ${formData.habillement}. Sur le côté de la figurine, intégrés dans des moules en plastique distincts, sont présents 3 accessoires :
-${formData.accessoire1}
-${formData.accessoire2}
-${formData.accessoire3}
+La figurine est habillée de [${formData.habillement}]. Sur le côté de la figurine, intégrés dans des moules en plastique distincts, sont présents 3 accessoires :
+[${formData.accessoire1}]
+[${formData.accessoire2}]
+[${formData.accessoire3}]
 
-Chaque accessoire s'insère parfaitement dans son propre compartiment moulé. L'emballage est photographié ou rendu avec des ombres douces, un éclairage uniforme et un fond blanc épuré pour donner l'impression d'une séance photo commerciale.
+Chaque accessoire s'insère parfaitement dans son propre compartiment moulé. Le fond du pack est de couleur [${formData.backgroundColor}]. L'emballage est photographié ou rendu avec des ombres douces, un éclairage uniforme et un fond blanc épuré pour donner l'impression d'une séance photo commerciale.
 
 Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de Pixar ou des maquettes de jouets modernes. Assure-toi que la disposition et les proportions du produit ressemblent à celles d'un véritable jouet vendu en magasin. Attache une attention toute particulière à ce que le visage de la figurine ressemble fidèlement à la photo portrait fournie.`;
   }, [formData]);
@@ -143,26 +160,21 @@ Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de
       setError(null);
       setIsLoading(true);
       
-      // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // If not authenticated, show auth modal
         setIsAuthModalOpen(true);
         return;
       }
 
-      // Validate required fields
       if (!formData.file) {
         setError('Veuillez télécharger le fichier de votre starter pack');
         return;
       }
 
-      // Upload file to Supabase Storage
       const uploadedFile = await uploadFile(formData.file, session.user.id);
 
-      // Add item to cart with the correct price and priceId
-      const product = STRIPE_PRODUCTS.STARTER_PACK_1X; // Default to 1x pack
+      const product = STRIPE_PRODUCTS.STARTER_PACK_1X;
       await addItem({
         id: uuidv4(),
         title: formData.title || 'Starter Pack Personnalisé',
@@ -174,7 +186,6 @@ Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de
         uploadedFile,
       });
 
-      // Navigate to cart
       navigate('/panier');
     } catch (error: any) {
       console.error('Error during checkout:', error);
@@ -292,6 +303,31 @@ Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     placeholder="ex: en position de combat"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Couleur de fond
+                </label>
+                <div className="grid grid-cols-4 gap-3">
+                  {BACKGROUND_COLORS.map(color => (
+                    <button
+                      key={color.id}
+                      onClick={() => handleColorChange(color)}
+                      className={`relative h-12 rounded-lg border-2 transition-all ${
+                        formData.backgroundColor === color.value
+                          ? 'border-blue-500 ring-2 ring-blue-200'
+                          : 'border-gray-200 hover:border-gray-300'
+                      } ${color.class}`}
+                      title={color.name}
+                    >
+                      {formData.backgroundColor === color.value && (
+                        <Check className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-blue-600" />
+                      )}
+                      <span className="sr-only">{color.name}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 

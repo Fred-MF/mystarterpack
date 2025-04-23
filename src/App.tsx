@@ -6,7 +6,10 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminLayout from './components/AdminLayout';
 import HomePage from './pages/HomePage';
-import CustomizePage from './pages/CustomizePage';
+import CustomizeFormPage from './pages/CustomizeFormPage';
+import GeneratePromptPage from './pages/GeneratePromptPage';
+import UploadDesignPage from './pages/UploadDesignPage';
+import OrderPage from './pages/OrderPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
@@ -50,7 +53,10 @@ function App() {
                   <main className="flex-grow">
                     <Routes>
                       <Route path="/" element={<HomePage />} />
-                      <Route path="/personnaliser" element={<CustomizePage />} />
+                      <Route path="/personnaliser" element={<CustomizeFormPage />} />
+                      <Route path="/generer" element={<GeneratePromptPage />} />
+                      <Route path="/deposer" element={<UploadDesignPage />} />
+                      <Route path="/commander" element={<OrderPage />} />
                       <Route path="/panier" element={<CartPage />} />
                       <Route path="/checkout" element={<CheckoutPage />} />
                       <Route path="/suivi-commande" element={<OrderTrackingPage />} />
