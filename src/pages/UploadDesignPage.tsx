@@ -5,14 +5,60 @@ import StepperLayout from '../components/StepperLayout';
 
 const STORAGE_KEY = 'starterprint3d_form_data';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_PREVIEW_SIZE = 800; // Max width/height for preview
 
 export default function UploadDesignPage() {
   const [error, setError] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > height && width > MAX_PREVIEW_SIZE) {
+            height = Math.round((height * MAX_PREVIEW_SIZE) / width);
+            width = MAX_PREVIEW_SIZE;
+          } else if (height > MAX_PREVIEW_SIZE) {
+            width = Math.round((width * MAX_PREVIEW_SIZE) / height);
+            height = MAX_PREVIEW_SIZE;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7)); // Use JPEG with 70% quality
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setError(null);
+      const file = e.target.files?.[0];
+      
+      if (!file) {
+        return;
+      }
+
       if (!file.type.startsWith('image/')) {
         setError('Veuillez sélectionner un fichier image valide');
         return;
@@ -23,20 +69,33 @@ export default function UploadDesignPage() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        setPreviewImage(imageUrl);
-        
-        // Update storage with the new image
-        const formData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      // Generate compressed preview
+      const compressedPreview = await compressImage(file);
+      setPreviewImage(compressedPreview);
+
+      // Store minimal file data
+      const formData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const fileData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        content: compressedPreview // Store compressed version
+      };
+
+      try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
           ...formData,
-          imageUrl,
-          file
+          file: fileData
         }));
-      };
-      reader.readAsDataURL(file);
+      } catch (storageError) {
+        console.error('Storage error:', storageError);
+        setError('Erreur lors de la sauvegarde. Veuillez réessayer avec une image plus petite.');
+        return;
+      }
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setError(err.message || 'Une erreur est survenue lors du traitement de l\'image');
     }
   };
 

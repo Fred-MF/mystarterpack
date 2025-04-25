@@ -19,14 +19,23 @@ export default function OrderPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const { addItem } = useCart();
 
-  const uploadFile = async (file: File, userId: string): Promise<{ path: string; name: string; type: string }> => {
-    const fileExt = file.name.split('.').pop();
+  const uploadFile = async (fileData: { content: string; name: string; type: string }, userId: string): Promise<{ path: string; name: string; type: string }> => {
+    if (!fileData.content || !fileData.name) {
+      throw new Error('Fichier invalide');
+    }
+
+    // Convert base64 to blob
+    const response = await fetch(fileData.content);
+    const blob = await response.blob();
+
+    const fileExt = fileData.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExt}`;
     const filePath = `${userId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('starter-pack-files')
-      .upload(filePath, file, {
+      .upload(filePath, blob, {
+        contentType: fileData.type,
         cacheControl: '3600',
         upsert: false,
         onUploadProgress: (progress) => {
@@ -40,8 +49,8 @@ export default function OrderPage() {
 
     return {
       path: filePath,
-      name: file.name,
-      type: file.type,
+      name: fileData.name,
+      type: fileData.type,
     };
   };
 
@@ -58,7 +67,7 @@ export default function OrderPage() {
       }
 
       const formData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      if (!formData.file) {
+      if (!formData.file || !formData.file.content) {
         setError('Veuillez télécharger le fichier de votre starter pack');
         return;
       }
@@ -123,6 +132,12 @@ export default function OrderPage() {
               <span className="text-lg font-bold text-gray-900">29.50 €</span>
             </div>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+              {error}
+            </div>
+          )}
 
           {uploadProgress > 0 && uploadProgress < 100 && (
             <div className="w-full bg-gray-200 rounded-full h-2.5">

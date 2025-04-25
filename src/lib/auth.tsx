@@ -27,28 +27,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setUser(session.user);
         setIsAuthenticated(true);
-        syncCart(); // Sync cart when session is found
+        syncCart();
       }
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user);
         setIsAuthenticated(true);
-        syncCart(); // Sync cart when auth state changes
+        syncCart();
       } else {
         setUser(null);
         setIsAuthenticated(false);
         setIsAdmin(false);
       }
     });
-
-    // Check admin session
-    const adminId = localStorage.getItem('adminId');
-    if (adminId) {
-      setIsAdmin(true);
-    }
 
     return () => {
       subscription.unsubscribe();
@@ -84,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setUser(null);
       setIsAuthenticated(false);
+      setIsAdmin(false);
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -91,54 +86,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const adminLogin = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.rpc('verify_admin_credentials', {
-        p_email: email,
-        p_password: password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
 
-      if (error) throw error;
-
-      if (!data || !data.length) {
+      if (signInError) {
         return {
           success: false,
           message: 'Identifiants invalides'
         };
       }
 
-      const { success, message, admin_id } = data[0];
-
-      if (success && admin_id) {
-        setIsAdmin(true);
-        localStorage.setItem('adminId', admin_id);
+      // Check if user is admin
+      const { data: isAdminResult } = await supabase.rpc('is_admin');
+      
+      if (!isAdminResult) {
+        await signOut();
+        return {
+          success: false,
+          message: 'Accès non autorisé'
+        };
       }
 
-      return { success, message };
+      setIsAdmin(true);
+      return {
+        success: true,
+        message: 'Connexion réussie'
+      };
     } catch (error: any) {
       console.error('Admin login error:', error);
       return {
         success: false,
-        message: error.message || 'Une erreur est survenue lors de la connexion'
+        message: 'Une erreur est survenue lors de la connexion'
       };
     }
   };
 
   const adminLogout = async () => {
-    localStorage.removeItem('adminId');
     setIsAdmin(false);
+    await signOut();
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        isAdmin,
-        signIn,
-        signOut,
-        adminLogin,
-        adminLogout
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      isAdmin,
+      signIn,
+      signOut,
+      adminLogin,
+      adminLogout
+    }}>
       {children}
     </AuthContext.Provider>
   );

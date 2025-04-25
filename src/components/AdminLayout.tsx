@@ -17,6 +17,10 @@ const AdminLayout = () => {
     { name: 'Clients', href: '/admin/clients', icon: Users },
   ];
 
+  const handleLogout = async () => {
+    await adminLogout();
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm">
@@ -51,7 +55,7 @@ const AdminLayout = () => {
             </div>
             <div className="flex items-center">
               <button
-                onClick={adminLogout}
+                onClick={handleLogout}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
               >
                 <LogOut className="h-5 w-5 mr-2" />

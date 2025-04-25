@@ -7,7 +7,7 @@ const HomePage = () => {
   return (
     <>
       <Helmet>
-        <title>StarterPrint3D - Starter Packs d'impression 3D personnalisés par IA</title>
+        <title>MyStarterPack - Votre Starter Pack personnalisé imprimé en 3D</title>
         <meta name="description" content="Découvrez nos starter packs d'impression 3D personnalisés et générés par IA. Commandez vos modèles 3D uniques dès maintenant." />
       </Helmet>
 

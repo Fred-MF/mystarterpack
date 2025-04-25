@@ -1,26 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { adminLogin, isAdmin } = useAuth();
+  const { adminLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const from = (location.state as any)?.from?.pathname || '/admin';
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAdmin) {
-      navigate('/admin', { replace: true });
-    }
-  }, [isAdmin, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +26,7 @@ const LoginPage = () => {
         setError(message);
       }
     } catch (err: any) {
+      console.error('Login error:', err);
       setError('Une erreur est survenue lors de la connexion');
     } finally {
       setIsLoading(false);

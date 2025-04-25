@@ -21,7 +21,7 @@ La figurine est habillée de ${formData.habillement}. Sur le côté de la figuri
 
 Chaque accessoire est vu de face, positionné à droite de la figurine et s'insère parfaitement dans son propre compartiment moulé. L'emballage est photographié avec des ombres douces, entièrement visible, un éclairage uniforme et un fond blanc épuré pour donner l'impression d'une séance photo commerciale.
 
-Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de Pixar ou des maquettes de jouets modernes. Assure-toi que la disposition et les proportions du produit ressemblent à celles d'un véritable jouet vendu en magasin. Attache une attention toute particulière à ce que le visage de la figurine ressemble fidèlement à la photo portrait fournie. Reproduis fidèlement la forme du visage, la coupe de cheveux, les yeux et les expressions faciales tout en gardant une touche stylisée, légèrement caricatural.`;
+Le style doit allier réalisme et stylisation du dessin animé 3D, à l'image de Pixar ou des maquettes de jouets modernes. Assure-toi que la disposition et les proportions du produit ressemblent à celles d'un véritable jouet vendu en magasin. Attache une attention toute particulière à ce que le visage de la figurine ressemble fidèlement à la photo portrait fournie. Reproduis fidèlement la forme du visage, la coupe de cheveux, les yeux et les expressions faciales tout en gardant une touche stylisée, légèrement caricaturale.`;
   }, [formData]);
 
   const handleCopyPrompt = async () => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { Eye, AlertCircle } from 'lucide-react';
@@ -21,67 +21,40 @@ const CustomersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const { isAdmin } = useAuth();
+  const { isAdmin, adminLogout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        // Log auth state
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        console.log('Current user:', user);
-        
-        if (authError) {
-          console.error('Auth error:', authError);
-          setDebugInfo({ authError });
-          setError('Erreur d\'authentification');
-          return;
-        }
-
-        if (!isAdmin) {
-          console.error('User is not admin according to auth context');
-          setDebugInfo({ isAdmin, userId: user?.id });
-          setError('Accès non autorisé. Veuillez vous reconnecter.');
-          return;
-        }
-
-        // Check admin status directly from the database
-        const { data: adminCheck, error: adminCheckError } = await supabase
-          .rpc('is_admin');
+        // Verify admin status
+        const { data: adminCheck, error: adminCheckError } = await supabase.rpc('is_admin');
 
         if (adminCheckError) {
           console.error('Error checking admin status:', adminCheckError);
-          setDebugInfo({ adminCheckError, userId: user?.id });
           setError('Erreur lors de la vérification des droits administrateur');
+          setDebugInfo({
+            type: 'admin_check_error',
+            error: adminCheckError
+          });
+          await adminLogout();
+          navigate('/admin/login');
           return;
         }
 
-        console.log('Admin check result:', adminCheck);
-
-        // Explicitly check for true since the RPC returns a boolean
-        if (adminCheck !== true) {
-          console.error('Database reports user is not admin', { adminCheck, userId: user?.id });
-          setDebugInfo({ adminCheck, userId: user?.id });
-          setError('Accès non autorisé selon la base de données');
+        if (!adminCheck) {
+          console.error('User is not admin according to database');
+          setError('Accès non autorisé');
+          setDebugInfo({
+            type: 'unauthorized',
+            adminCheck
+          });
+          await adminLogout();
+          navigate('/admin/login');
           return;
         }
 
-        // Verify admin user exists
-        const { data: adminUser, error: adminUserError } = await supabase
-          .from('admin_users')
-          .select('id, email')
-          .eq('id', user?.id)
-          .maybeSingle();
-
-        if (adminUserError) {
-          console.error('Error fetching admin user:', adminUserError);
-          setDebugInfo({ adminUserError, userId: user?.id });
-          setError('Erreur lors de la vérification du compte administrateur');
-          return;
-        }
-
-        console.log('Admin user:', adminUser);
-
-        // Fetch customers with error logging
+        // Fetch customers
         const { data: customers, error: fetchError } = await supabase
           .from('admin_customers')
           .select('*')
@@ -89,31 +62,33 @@ const CustomersPage = () => {
 
         if (fetchError) {
           console.error('Error fetching customers:', fetchError);
-          setDebugInfo({ fetchError, userId: user?.id });
           setError('Erreur lors du chargement des clients');
+          setDebugInfo({
+            type: 'fetch_error',
+            error: fetchError
+          });
           return;
         }
 
-        if (!customers) {
-          console.error('No data returned from customers query');
-          setDebugInfo({ customers, userId: user?.id });
-          setError('Aucune donnée client trouvée');
-          return;
-        }
-
-        console.log('Successfully fetched customers:', customers.length);
-        setCustomers(customers);
+        setCustomers(customers || []);
       } catch (err: any) {
         console.error('Unexpected error in fetchCustomers:', err);
-        setDebugInfo({ unexpectedError: err });
         setError('Une erreur inattendue est survenue');
+        setDebugInfo({
+          type: 'unexpected_error',
+          error: err
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCustomers();
-  }, [isAdmin]);
+    if (isAdmin) {
+      fetchCustomers();
+    } else {
+      navigate('/admin/login');
+    }
+  }, [isAdmin, adminLogout, navigate]);
 
   if (loading) {
     return (

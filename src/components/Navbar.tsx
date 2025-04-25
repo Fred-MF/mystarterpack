@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Printer, ShoppingCart, User, LogOut } from 'lucide-react';
+import { Printer, ShoppingCart, User, LogOut, Settings } from 'lucide-react';
 import { useCart } from '../lib/cart';
 import { useAuth } from '../lib/auth';
 import AuthModal from './AuthModal';
 
 const Navbar = () => {
   const { items } = useCart();
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, isAdmin, signOut } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -34,6 +34,14 @@ const Navbar = () => {
             </Link>
             {isAuthenticated ? (
               <>
+                {isAdmin && (
+                  <Link 
+                    to="/admin" 
+                    className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md flex items-center"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Link>
+                )}
                 <Link to="/compte" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md">
                   <User className="h-5 w-5" />
                 </Link>
